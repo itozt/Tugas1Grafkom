@@ -1,166 +1,170 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
   <head>
-    <title>Interactive 3D Garbage Bin</title>
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
-    />
-  </head>
-  <body class="m-0 p-2 font-sans inline-block gap-5">
-    <!-- MENERAPKAN VBO (BUFFER DATA), VERTEX SHADER, DAN FRAGMENT SHADER.-->
-    <h1 class="font-bold underline mb-5">TUGAS 1 GRAFIKA KOMPUTER</h1>
-    <h2 class="font-bold">
-      Anggota Kelompok :
-      <span class="font-normal"> 1. Alvin Zanua Putra - 5025231064</span>
-    </h2>
-    <h2 class="ml-40">2. Christoforus Indra Bagus Pratama - 5025231124</h2>
-    <canvas id="gl-canvas" width="400" height="400"></canvas>
-    <button class="border border-black p-1 m-5" onclick="resetTransforms()">
-      Kembalikan Semula
-    </button>
-    <div class="flex items-center p-5 h-fit">
-      <div class="mb-5 p-4">
-        <div class="my-3">
-          <label for="rotateX" class="block mb-2 font-bold text-gray-600"
-            >Rotate X-Axis:</label
-          >
-          <input
-            type="range"
-            id="rotateX"
-            class="w-full h-2 rounded-sm bg-gray-300 outline-none opacity-70 hover:opacity-100 transition-opacity duration-200"
-            min="0"
-            max="360"
-            value="30"
-          />
-          <div
-            class="text-center font-bold text-gray-800 mt-2"
-            id="rotateX-value"
-          >
-            30°
-          </div>
-        </div>
-        <div class="my-3">
-          <label for="rotateY" class="block mb-2 font-bold text-gray-600"
-            >Rotate Y-Axis:</label
-          >
-          <input
-            type="range"
-            id="rotateY"
-            class="w-full h-2 rounded-sm bg-gray-300 outline-none opacity-70 hover:opacity-100 transition-opacity duration-200"
-            min="0"
-            max="360"
-            value="30"
-          />
-          <div
-            class="text-center font-bold text-gray-800 mt-2"
-            id="rotateY-value"
-          >
-            30°
-          </div>
-        </div>
-      </div>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tugas 1 Grafkom - Membuat Objek 3D Tempat Sampah</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: white;
+        color: black;
+        padding: 20px;
+      }
 
-      <div class="mb-5 p-4">
-        <div class="my-3">
-          <label for="translateX" class="block mb-2 font-bold text-gray-600"
-            >Translate X-Axis:</label
-          >
-          <input
-            type="range"
-            id="translateX"
-            class="w-full h-2 rounded-sm bg-gray-300 outline-none opacity-70 hover:opacity-100 transition-opacity duration-200"
-            min="-5"
-            max="5"
-            value="0"
-            step="0.1"
+      button {
+        border: 1px solid black;
+        background-color: white;
+        padding: 5px 10px;
+        margin: 2px;
+        cursor: pointer;
+        font-size: 12px;
+      }
+
+      button:hover {
+        background-color: #f0f0f0;
+      }
+
+      input[type="range"] {
+        width: 100%;
+        border: 1px solid black;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      canvas {
+        border: 2px solid black;
+      }
+
+      label {
+        font-weight: bold;
+        font-size: 14px;
+      }
+
+      nav ul {
+        list-style-type: none;
+        padding: 0;
+      }
+
+      nav li {
+        margin: 10px 0;
+      }
+
+      nav a {
+        color: black;
+        text-decoration: none;
+        padding: 8px 12px;
+        border: 1px solid black;
+        display: inline-block;
+        background-color: white;
+      }
+
+      nav a:hover {
+        background-color: #f0f0f0;
+      }
+
+      .group-list {
+        list-style-type: none;
+        padding: 0;
+      }
+
+      .group-list li {
+        margin: 8px 0;
+        padding: 10px;
+        border: 1px solid #ddd;
+        background-color: #f9f9f9;
+      }
+
+      .member-name {
+        font-weight: bold;
+      }
+
+      .member-nrp {
+        color: #666;
+        margin-left: 20px;
+      }
+
+      .member-class {
+        color: #888;
+        font-style: italic;
+        margin-left: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>TUGAS GRAFIKA KOMPUTER</h1>
+      <h2>Tugas 1 Grafkom - Membuat Objek 3D Sampah</h2>
+
+      <h3>List Anggota Kelompok</h3>
+      <ul class="group-list">
+        <li>
+          <span class="member-name">Alvin Zanua Putra</span>
+          <span class="member-nrp">NRP: 5025231064</span>
+          <span class="member-class">Grafika Computer A</span>
+        </li>
+        <li>
+          <span class="member-name">Christoforus Indra Bagus Pratama</span>
+          <span class="member-nrp">NRP: 5025231124</span>
+          <span class="member-class">Grafika Komputer A</span>
+        </li>
+      </ul>
+
+      <h2>Navigasi Otomatis</h2>
+      <nav>
+        <ul>
+          <li>
+            <a href="/assets/pages/1_Interaction/index.html">1. Modification Interaction</a>
+          </li>
+          <li>
+            <a href="/assets/pages/2_Perspective/index.html">2. Modification Perspective</a>
+          </li>
+          <li>
+            <a href="/assets/pages/3_Lightning/index.html">3. Modification Lightning</a>
+          </li>
+          <li><a href="/assets/pages/4_Texture/index.html">4. Modification Texture</a></li>
+        </ul>
+      </nav>
+
+      <h2>Preview Gambar Object Yang Dipilih</h2>
+
+      <div
+        style="
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 20px;
+          margin: 20px 0;
+        "
+      >
+        <div style="text-align: center">
+          <img
+            src="/assets/image/1-garbage-far.jpg"
+            alt="Tempat Sampah - Jarak Jauh"
+            style="max-width: 235px; border: 2px solid black"
           />
-          <div
-            class="text-center font-bold text-gray-800 mt-2"
-            id="translateX-value"
-          >
-            0.0
-          </div>
+          <p><em>Gambar 1.1 - Tempat sampah dari jarak jauh</em></p>
         </div>
-        <div class="my-3">
-          <label for="translateY" class="block mb-2 font-bold text-gray-600"
-            >Translate Y-Axis:</label
-          >
-          <input
-            type="range"
-            id="translateY"
-            class="w-full h-2 rounded-sm bg-gray-300 outline-none opacity-70 hover:opacity-100 transition-opacity duration-200"
-            min="-5"
-            max="5"
-            value="0"
-            step="0.1"
+        <div style="text-align: center">
+          <img
+            src="/assets/image/2-garbage-near.jpg"
+            alt="Tempat Sampah - Jarak Dekat"
+            style="max-width: 235px; border: 2px solid black"
           />
-          <div
-            class="text-center font-bold text-gray-800 mt-2"
-            id="translateY-value"
-          >
-            0.0
-          </div>
+          <p><em>Gambar 1.2 - Tempat sampah dari jarak dekat</em></p>
+        </div>
+        <div style="text-align: center">
+          <img
+            src="/assets/image/preview-object.jpg"
+            alt="Preview Object 3D"
+            style="max-width: 260px; border: 2px solid black"
+          />
+          <p><em>Gambar 1.3 - Preview object 3D</em></p>
         </div>
       </div>
     </div>
-    <!-- Vertex Shader -->
-    <script id="vertex-shader" type="x-shader/x-vertex">
-      #version 300 es
-
-      in vec4 aPosition;
-      in vec4 aColor;
-      out vec4 vColor;
-
-      uniform vec3 uTheta;
-      uniform vec2 uTranslation;
-
-      void main()
-      {
-          vec3 angles = radians(uTheta);
-          vec3 c = cos(angles);
-          vec3 s = sin(angles);
-
-          // Rotation matrices (column-major)
-          mat4 rx = mat4(1.0,  0.0,  0.0, 0.0,
-                         0.0,  c.x,  s.x, 0.0,
-                         0.0, -s.x,  c.x, 0.0,
-                         0.0,  0.0,  0.0, 1.0);
-
-          mat4 ry = mat4( c.y, 0.0, -s.y, 0.0,
-                          0.0, 1.0,  0.0, 0.0,
-                          s.y, 0.0,  c.y, 0.0,
-                          0.0, 0.0,  0.0, 1.0);
-
-          // Translation matrix
-          mat4 translation = mat4(1.0, 0.0, 0.0, 0.0,
-                                 0.0, 1.0, 0.0, 0.0,
-                                 0.0, 0.0, 1.0, 0.0,
-                                 uTranslation.x, uTranslation.y, 0.0, 1.0);
-
-          vColor = aColor;
-          gl_Position = translation * rx * ry * aPosition;
-          gl_Position.z = -gl_Position.z;
-      }
-    </script>
-
-    <script id="fragment-shader" type="x-shader/x-fragment">
-      #version 300 es
-
-      precision mediump float;
-
-      in vec4 vColor;
-      out vec4 fColor;
-
-      void
-      main()
-      {
-          fColor = vColor;
-      }
-    </script>
-    <script src="./assets/js/initShaders.js"></script>
-    <script src="./assets/js/MVnew.js"></script>
-    <!-- <script src="./assets/js/object.js"></script> -->
-    <script src="./assets/js/cobaGarbage.js"></script>
   </body>
 </html>

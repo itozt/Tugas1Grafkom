@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Interactive 3D Garbage Bin</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: white;
+        color: black;
+        padding: 20px;
+      }
+
+      button {
+        border: 1px solid black;
+        background-color: white;
+        padding: 5px 10px;
+        margin: 2px;
+        cursor: pointer;
+        font-size: 12px;
+      }
+
+      button:hover {
+        background-color: #f0f0f0;
+      }
+
+      input[type="range"] {
+        width: 100%;
+        border: 1px solid black;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      canvas {
+        border: 2px solid black;
+      }
+
+      label {
+        font-weight: bold;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <h1
+        style="
+          text-align: center;
+          border-bottom: 2px solid black;
+          padding-bottom: 10px;
+        "
+      >
+        TUGAS 1 GRAFIKA KOMPUTER
+      </h1>
+      <div style="display: flex; gap: 20px; margin-top: 20px">
+        <!-- Canvas section -->
+        <div>
+          <h2 style="font-weight: bold; margin-bottom: 10px">
+            Gambar Tempat Sampah Original
+          </h2>
+          <div
+            class="images"
+            style="
+              display: flex;
+              gap: 10px;
+              justify-content: flex-start;
+              margin-bottom: 15px;
+            "
+          >
+            <img
+              src="assets/image/1-garbage-far.jpg"
+              alt="Trash Icon"
+              width="150"
+              style="border: 1px solid black"
+            />
+            <img
+              src="assets/image/2-garbage-near.jpg"
+              alt="Trash Icon"
+              width="150"
+              style="border: 1px solid black"
+            />
+          </div>
+          <div
+            style="border-top: 2px solid black; margin: 20px 10px 10px 0"
+          ></div>
+          <h2 style="font-weight: bold; margin-bottom: 10px">
+            Output Object 3D
+          </h2>
+          <canvas id="gl-canvas" width="512" height="512"></canvas>
+          <div style="margin-top: 20px">
+            <h2 style="font-weight: bold">Anggota Kelompok :</h2>
+            <ul style="margin-left: 30px">
+              <li>Alvin Zanua Putra - 5025231064</li>
+              <li>Christoforus Indra Bagus Pratama - 5025231124</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Controls section -->
+        <div style="flex: 1">
+          <h4 style="font-weight: bold; font-size: 18px; margin-bottom: 10px">
+            Interaction Handle
+          </h4>
+          <div style="margin-bottom: 20px">
+            <div style="margin-bottom: 15px">
+              <label for="rotateX"
+                >Rotate X-Axis: <span id="rotateX-value">30°</span></label
+              >
+              <input type="range" id="rotateX" min="0" max="360" value="30" />
+            </div>
+            <div style="margin-bottom: 15px">
+              <label for="rotateY"
+                >Rotate Y-Axis: <span id="rotateY-value">30°</span></label
+              >
+              <input type="range" id="rotateY" min="0" max="360" value="30" />
+            </div>
+            <div style="margin-bottom: 15px">
+              <label for="translateX"
+                >Translate X-Axis: <span id="translateX-value">0.0</span></label
+              >
+              <input
+                type="range"
+                id="translateX"
+                min="-5"
+                max="5"
+                value="0"
+                step="0.1"
+              />
+            </div>
+            <div style="margin-bottom: 15px">
+              <label for="translateY"
+                >Translate Y-Axis: <span id="translateY-value">0.0</span></label
+              >
+              <input
+                type="range"
+                id="translateY"
+                min="-5"
+                max="5"
+                value="0"
+                step="0.1"
+              />
+            </div>
+          </div>
+
+          <h4 style="font-weight: bold; font-size: 18px; margin-bottom: 10px">
+            Perspective Handle
+          </h4>
+          <div style="margin-bottom: 20px">
+            <button id="Button1">Increase Z</button>
+            <button id="Button2">Decrease Z</button>
+            <button id="Button3">Increase R</button>
+            <button id="Button4">Decrease R</button>
+            <button id="Button5">Increase θ</button>
+            <button id="Button6">Decrease θ</button>
+            <button id="Button7">Increase φ</button>
+            <button id="Button8">Decrease φ</button>
+          </div>
+
+          <h4 style="font-weight: bold; font-size: 18px; margin-bottom: 10px">
+            Lightning Handle
+          </h4>
+          <div style="margin-bottom: 20px">
+            <p style="font-size: 12px; margin-bottom: 5px">
+              Light Position:
+              <span id="light-position-value">(1.0, 1.0, 1.0)</span>
+            </p>
+            <button id="ButtonL0">Increase X</button>
+            <button id="ButtonL1">Decrease X</button>
+            <button id="ButtonL2">Increase Y</button>
+            <button id="ButtonL3">Decrease Y</button>
+            <button id="ButtonL4">Increase Z</button>
+            <button id="ButtonL5">Decrease Z</button>
+            <p></p>
+            <p style="font-size: 12px; margin-bottom: 5px; margin-top: 10px">
+              Ambient Light:
+              <span id="ambient-value">RGB(0.20, 0.20, 0.20)</span>
+            </p>
+            <button id="ButtonL6">Increase Ambient R</button>
+            <button id="ButtonL7">Decrease Ambient R</button>
+            <button id="ButtonL8">Increase Ambient G</button>
+            <button id="ButtonL9">Decrease Ambient G</button>
+            <button id="ButtonL10">Increase Ambient B</button>
+            <button id="ButtonL11">Decrease Ambient B</button>
+            <p></p>
+            <p style="font-size: 12px; margin-bottom: 5px; margin-top: 10px">
+              Diffuse Light:
+              <span id="diffuse-value">RGB(1.00, 1.00, 1.00)</span>
+            </p>
+            <button id="ButtonL12">Increase Diffuse R</button>
+            <button id="ButtonL13">Decrease Diffuse R</button>
+            <button id="ButtonL14">Increase Diffuse G</button>
+            <button id="ButtonL15">Decrease Diffuse G</button>
+            <button id="ButtonL16">Increase Diffuse B</button>
+            <button id="ButtonL17">Decrease Diffuse B</button>
+            <p></p>
+            <p style="font-size: 12px; margin-bottom: 5px; margin-top: 10px">
+              Specular Light:
+              <span id="specular-value">RGB(1.00, 1.00, 1.00)</span>
+            </p>
+            <button id="ButtonL18">Increase Specular R</button>
+            <button id="ButtonL19">Decrease Specular R</button>
+            <button id="ButtonL20">Increase Specular G</button>
+            <button id="ButtonL21">Decrease Specular G</button>
+            <button id="ButtonL22">Increase Specular B</button>
+            <button id="ButtonL23">Decrease Specular B</button>
+            <p></p>
+            <p style="font-size: 12px; margin-bottom: 5px; margin-top: 10px">
+              Shininess: <span id="shininess-value">10.0</span>
+            </p>
+            <button id="ButtonL24">Increase Shininess</button>
+            <button id="ButtonL25">Decrease Shininess</button>
+          </div>
+
+          <h4 style="font-weight: bold; font-size: 18px; margin-bottom: 10px">
+            Texture Handle
+          </h4>
+          <div style="margin-bottom: 20px">
+            <p style="font-size: 12px; margin-bottom: 5px">
+              Texture Mode: <span id="texture-mode-value">OFF</span>
+            </p>
+            <button id="ButtonT0">Texture OFF</button>
+            <button id="ButtonT1">Checkboard Texture</button>
+            <button id="ButtonT2">Image Texture</button>
+          </div>
+
+          <div style="border-top: 2px solid black; margin: 20px 0"></div>
+          <div style="text-align: center">
+            <button
+              onclick="resetAll()"
+              style="padding: 10px 20px; font-weight: bold"
+            >
+              Kembalikan Semula
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Vertex Shader -->
+    <script id="vertex-shader" type="x-shader/x-vertex">
+      #version 300 es
+
+      in vec4 aPosition;
+      in vec4 aColor;
+      in vec3 aNormal;
+      in vec2 aTexCoord;
+
+      uniform mat4 uModelViewMatrix;
+      uniform mat4 uProjectionMatrix;
+      uniform mat3 uNormalMatrix;
+      uniform vec4 uLightPosition;
+
+      out vec3 vNormal;
+      out vec3 vLightDirection;
+      out vec3 vViewDirection;
+      out vec4 vColor;
+      out vec2 vTexCoord;
+
+      void main()
+      {
+          // Transform vertex position to eye coordinates
+          vec4 eyePosition = uModelViewMatrix * aPosition;
+
+          // Transform normal to eye coordinates
+          vNormal = normalize(uNormalMatrix * aNormal);
+
+          // Calculate light direction (from vertex to light)
+          vLightDirection = normalize(uLightPosition.xyz - eyePosition.xyz);
+
+          // Calculate view direction (from vertex to camera)
+          vViewDirection = normalize(-eyePosition.xyz);
+
+          // Pass color and texture coordinates to fragment shader
+          vColor = aColor;
+          vTexCoord = aTexCoord;
+
+          // Calculate final position
+          gl_Position = uProjectionMatrix * eyePosition;
+      }
+    </script>
+
+    <script id="fragment-shader" type="x-shader/x-fragment">
+      #version 300 es
+
+      precision mediump float;
+
+      in vec3 vNormal;
+      in vec3 vLightDirection;
+      in vec3 vViewDirection;
+      in vec4 vColor;
+      in vec2 vTexCoord;
+
+      uniform vec3 uAmbientLight;
+      uniform vec3 uDiffuseLight;
+      uniform vec3 uSpecularLight;
+      uniform float uShininess;
+      uniform sampler2D uTextureMap;
+      uniform int uTextureMode; // 0 = no texture, 1 = checkboard, 2 = image
+
+      out vec4 fColor;
+
+      void main()
+      {
+          // Normalize interpolated vectors
+          vec3 N = normalize(vNormal);
+          vec3 L = normalize(vLightDirection);
+          vec3 V = normalize(vViewDirection);
+
+          // Calculate half vector for specular reflection
+          vec3 H = normalize(L + V);
+
+          // Get base color (either from vertex color or texture)
+          vec4 baseColor = vColor;
+          if (uTextureMode > 0) {
+              vec4 texColor = texture(uTextureMap, vTexCoord);
+              baseColor = texColor * vColor;
+          }
+
+          // Ambient component
+          vec3 ambient = uAmbientLight * baseColor.rgb;
+
+          // Diffuse component
+          float diffuseFactor = max(dot(N, L), 0.0);
+          vec3 diffuse = diffuseFactor * uDiffuseLight * baseColor.rgb;
+
+          // Specular component
+          float specularFactor = 0.0;
+          if (diffuseFactor > 0.0) {
+              specularFactor = pow(max(dot(N, H), 0.0), uShininess);
+          }
+          vec3 specular = specularFactor * uSpecularLight;
+
+          // Combine all lighting components
+          vec3 finalColor = ambient + diffuse + specular;
+
+          fColor = vec4(finalColor, baseColor.a);
+      }
+    </script>
+    <script src="./assets/js/initShaders.js"></script>
+    <script src="./assets/js/MVnew.js"></script>
+    <!-- <script src="./assets/js/object.js"></script> -->
+    <script src="./assets/js/cobaGarbage.js"></script>
+  </body>
+</html>

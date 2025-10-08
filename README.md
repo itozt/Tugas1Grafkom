@@ -1,11 +1,11 @@
 # TUGAS GRAFIKA KOMPUTER 
 
-## Navigasi Otomatis
+### List Anggota Kelompok
 
-- [Modification Perpective](/Modification/2_Perspective)
-- [Modification Lightning](/Modification/3_Lightning)
-- [Modification Texture](/Modification/4_Texture)
-
+| Nama                             | NRP        | Kelas              |
+| -------------------------------- | ---------- | ------------------ |
+| Alvin Zanua Putra                | 5025231064 | Grafika Computer A |
+| Christoforus Indra Bagus Pratama | 5025231124 | Grafika Komputer A |
 
 **Tujuan:**
 
@@ -34,14 +34,6 @@ Buat aplikasi grafika untuk menggambarkan objek benda nyata di dalam lingkungan 
 4. Jumlah interaksi yang ada.
 5. Jumlah Transformasi yang ada.
 
-**Deadline: jam 12 Malam Hari Senin**
-
-### List Anggota Kelompok
-
-| Nama                             | NRP        | Kelas              |
-| -------------------------------- | ---------- | ------------------ |
-| Alvin Zanua Putra                | 5025231064 | Grafika Computer A |
-| Christoforus Indra Bagus Pratama | 5025231124 | Grafika Komputer A |
 
 - Foto jarak jauh dan dekat dulu
 - Canvas + image

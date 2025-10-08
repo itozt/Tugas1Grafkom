@@ -8,6 +8,7 @@ var numPositions = 36
 var positions = []
 var colors = []
 var normals = []
+var texCoords = []
 var indices = [] // Untuk IBO
 
 var thetaLoc, translationLoc
@@ -42,11 +43,104 @@ var fovy = 45.0
 var aspect
 
 var modelViewMatrixLoc, projectionMatrixLoc, normalMatrixLoc
-var lightPositionLoc, ambientLightLoc, diffuseLightLoc, specularLightLoc, shininessLoc
+var lightPositionLoc,
+  ambientLightLoc,
+  diffuseLightLoc,
+  specularLightLoc,
+  shininessLoc
+var textureModeLoc
 var modelViewMatrix, projectionMatrix
 var eye
 const at = vec3(0.0, 0.0, 0.0)
 const up = vec3(0.0, 1.0, 0.0)
+
+// Texture variables
+var textureMode = 0
+var checkboardTexture
+var imageTexture
+var texSize = 128
+
+function generateCheckboardTexture () {
+  var image1 = new Array()
+  for (var i = 0; i < texSize; i++) image1[i] = new Array()
+  for (var i = 0; i < texSize; i++)
+    for (var j = 0; j < texSize; j++) image1[i][j] = new Float32Array(4)
+  for (var i = 0; i < texSize; i++)
+    for (var j = 0; j < texSize; j++) {
+      var c = ((i & 0x8) == 0) ^ ((j & 0x8) == 0)
+      image1[i][j] = [c, c, c, 1]
+    }
+
+  var image2 = new Uint8Array(4 * texSize * texSize)
+  for (var i = 0; i < texSize; i++)
+    for (var j = 0; j < texSize; j++)
+      for (var k = 0; k < 4; k++)
+        image2[4 * texSize * i + 4 * j + k] = 255 * image1[i][j][k]
+
+  return image2
+}
+
+function configureCheckboardTexture () {
+  var imageData = generateCheckboardTexture()
+  checkboardTexture = gl.createTexture()
+  gl.bindTexture(gl.TEXTURE_2D, checkboardTexture)
+  gl.texImage2D(
+    gl.TEXTURE_2D,
+    0,
+    gl.RGBA,
+    texSize,
+    texSize,
+    0,
+    gl.RGBA,
+    gl.UNSIGNED_BYTE,
+    imageData
+  )
+  gl.generateMipmap(gl.TEXTURE_2D)
+  gl.texParameteri(
+    gl.TEXTURE_2D,
+    gl.TEXTURE_MIN_FILTER,
+    gl.NEAREST_MIPMAP_LINEAR
+  )
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+  gl.bindTexture(gl.TEXTURE_2D, null)
+}
+
+function configureImageTexture () {
+  imageTexture = gl.createTexture()
+  gl.bindTexture(gl.TEXTURE_2D, imageTexture)
+  gl.texImage2D(
+    gl.TEXTURE_2D,
+    0,
+    gl.RGBA,
+    1,
+    1,
+    0,
+    gl.RGBA,
+    gl.UNSIGNED_BYTE,
+    new Uint8Array([255, 255, 255, 255])
+  )
+
+  var image = new Image()
+  image.onload = function () {
+    gl.bindTexture(gl.TEXTURE_2D, imageTexture)
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image)
+    gl.generateMipmap(gl.TEXTURE_2D)
+    gl.texParameteri(
+      gl.TEXTURE_2D,
+      gl.TEXTURE_MIN_FILTER,
+      gl.LINEAR_MIPMAP_LINEAR
+    )
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+    console.log('Image texture loaded successfully')
+  }
+  image.onerror = function () {
+    console.error('Failed to load texture image')
+  }
+  image.src = 'assets/image/spiderman.jpg'
+
+  gl.bindTexture(gl.TEXTURE_2D, null)
+}
 
 init()
 
@@ -94,6 +188,15 @@ function init () {
   gl.vertexAttribPointer(normalLoc, 3, gl.FLOAT, false, 0, 0)
   gl.enableVertexAttribArray(normalLoc)
 
+  // Setup texture coordinate buffer
+  var tBuffer = gl.createBuffer()
+  gl.bindBuffer(gl.ARRAY_BUFFER, tBuffer)
+  gl.bufferData(gl.ARRAY_BUFFER, flatten(texCoords), gl.STATIC_DRAW)
+
+  var texCoordLoc = gl.getAttribLocation(program, 'aTexCoord')
+  gl.vertexAttribPointer(texCoordLoc, 2, gl.FLOAT, false, 0, 0)
+  gl.enableVertexAttribArray(texCoordLoc)
+
   // Setup index buffer
   var iBuffer = gl.createBuffer()
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, iBuffer)
@@ -112,10 +215,19 @@ function init () {
   diffuseLightLoc = gl.getUniformLocation(program, 'uDiffuseLight')
   specularLightLoc = gl.getUniformLocation(program, 'uSpecularLight')
   shininessLoc = gl.getUniformLocation(program, 'uShininess')
+  textureModeLoc = gl.getUniformLocation(program, 'uTextureMode')
+
+  // Initialize textures
+  configureCheckboardTexture()
+  configureImageTexture()
+
+  // Set texture unit
+  gl.uniform1i(gl.getUniformLocation(program, 'uTextureMap'), 0)
 
   setupControls()
   setupLightingControls()
-  
+  setupTextureControls()
+
   // Perspective buttons
   document.getElementById('Button1').onclick = function () {
     near *= 1.1
@@ -180,6 +292,7 @@ function createGarbageBin () {
   positions = []
   colors = []
   normals = []
+  texCoords = []
   indices = []
 
   // Badan utama tempat sampah (warna biru, tanpa tutup, bentuk persegi panjang)
@@ -216,71 +329,93 @@ function createRectangularPrism (x, y, z, width, height, depth, color) {
 
   // Face normals
   var faceNormals = [
-    vec3(0, 0, 1),   // front
-    vec3(1, 0, 0),   // right
-    vec3(0, 1, 0),   // top
-    vec3(0, -1, 0),  // bottom
-    vec3(0, 0, -1),  // back
-    vec3(-1, 0, 0)   // left
+    vec3(0, 0, 1), // front
+    vec3(1, 0, 0), // right
+    vec3(0, 1, 0), // top
+    vec3(0, -1, 0), // bottom
+    vec3(0, 0, -1), // back
+    vec3(-1, 0, 0) // left
   ]
 
   // Face definitions with vertices
   var faces = [
     // front
-    {normal: faceNormals[0], vertices: [
-      vec4(x + hw, y - hh, z + hd, 1.0),
-      vec4(x - hw, y - hh, z + hd, 1.0),
-      vec4(x - hw, y + hh, z + hd, 1.0),
-      vec4(x + hw, y + hh, z + hd, 1.0)
-    ]},
+    {
+      normal: faceNormals[0],
+      vertices: [
+        vec4(x + hw, y - hh, z + hd, 1.0),
+        vec4(x - hw, y - hh, z + hd, 1.0),
+        vec4(x - hw, y + hh, z + hd, 1.0),
+        vec4(x + hw, y + hh, z + hd, 1.0)
+      ]
+    },
     // right
-    {normal: faceNormals[1], vertices: [
-      vec4(x + hw, y + hh, z + hd, 1.0),
-      vec4(x + hw, y + hh, z - hd, 1.0),
-      vec4(x + hw, y - hh, z - hd, 1.0),
-      vec4(x + hw, y - hh, z + hd, 1.0)
-    ]},
+    {
+      normal: faceNormals[1],
+      vertices: [
+        vec4(x + hw, y + hh, z + hd, 1.0),
+        vec4(x + hw, y + hh, z - hd, 1.0),
+        vec4(x + hw, y - hh, z - hd, 1.0),
+        vec4(x + hw, y - hh, z + hd, 1.0)
+      ]
+    },
     // top
-    {normal: faceNormals[2], vertices: [
-      vec4(x - hw, y + hh, z + hd, 1.0),
-      vec4(x - hw, y + hh, z - hd, 1.0),
-      vec4(x + hw, y + hh, z - hd, 1.0),
-      vec4(x + hw, y + hh, z + hd, 1.0)
-    ]},
+    {
+      normal: faceNormals[2],
+      vertices: [
+        vec4(x - hw, y + hh, z + hd, 1.0),
+        vec4(x - hw, y + hh, z - hd, 1.0),
+        vec4(x + hw, y + hh, z - hd, 1.0),
+        vec4(x + hw, y + hh, z + hd, 1.0)
+      ]
+    },
     // bottom
-    {normal: faceNormals[3], vertices: [
-      vec4(x + hw, y - hh, z + hd, 1.0),
-      vec4(x + hw, y - hh, z - hd, 1.0),
-      vec4(x - hw, y - hh, z - hd, 1.0),
-      vec4(x - hw, y - hh, z + hd, 1.0)
-    ]},
+    {
+      normal: faceNormals[3],
+      vertices: [
+        vec4(x + hw, y - hh, z + hd, 1.0),
+        vec4(x + hw, y - hh, z - hd, 1.0),
+        vec4(x - hw, y - hh, z - hd, 1.0),
+        vec4(x - hw, y - hh, z + hd, 1.0)
+      ]
+    },
     // back
-    {normal: faceNormals[4], vertices: [
-      vec4(x + hw, y - hh, z - hd, 1.0),
-      vec4(x + hw, y + hh, z - hd, 1.0),
-      vec4(x - hw, y + hh, z - hd, 1.0),
-      vec4(x - hw, y - hh, z - hd, 1.0)
-    ]},
+    {
+      normal: faceNormals[4],
+      vertices: [
+        vec4(x + hw, y - hh, z - hd, 1.0),
+        vec4(x + hw, y + hh, z - hd, 1.0),
+        vec4(x - hw, y + hh, z - hd, 1.0),
+        vec4(x - hw, y - hh, z - hd, 1.0)
+      ]
+    },
     // left
-    {normal: faceNormals[5], vertices: [
-      vec4(x - hw, y - hh, z + hd, 1.0),
-      vec4(x - hw, y - hh, z - hd, 1.0),
-      vec4(x - hw, y + hh, z - hd, 1.0),
-      vec4(x - hw, y + hh, z + hd, 1.0)
-    ]}
+    {
+      normal: faceNormals[5],
+      vertices: [
+        vec4(x - hw, y - hh, z + hd, 1.0),
+        vec4(x - hw, y - hh, z - hd, 1.0),
+        vec4(x - hw, y + hh, z - hd, 1.0),
+        vec4(x - hw, y + hh, z + hd, 1.0)
+      ]
+    }
   ]
+
+  // Texture coordinates for each vertex of a quad
+  var texCoordArray = [vec2(1, 0), vec2(0, 0), vec2(0, 1), vec2(1, 1)]
 
   for (var f = 0; f < faces.length; f++) {
     var face = faces[f]
     var baseIdx = positions.length
-    
+
     // Add all 4 vertices for this face
     for (var v = 0; v < 4; v++) {
       positions.push(face.vertices[v])
       colors.push(color)
       normals.push(face.normal)
+      texCoords.push(texCoordArray[v])
     }
-    
+
     // Create two triangles from the quad
     // Triangle 1: 0, 1, 2
     indices.push(baseIdx, baseIdx + 1, baseIdx + 2)
@@ -292,7 +427,7 @@ function createRectangularPrism (x, y, z, width, height, depth, color) {
 function createWheel (x, y, z, radius, thickness) {
   var segments = 32
   var angleStep = (2 * Math.PI) / segments
-  
+
   for (var i = 0; i < segments; i++) {
     var angle1 = i * angleStep
     var angle2 = (i + 1) * angleStep
@@ -314,6 +449,13 @@ function createWheel (x, y, z, radius, thickness) {
     normals.push(vec3(0, 0, 1))
     normals.push(vec3(0, 0, 1))
     normals.push(vec3(0, 0, 1))
+    texCoords.push(vec2(0.5, 0.5))
+    texCoords.push(
+      vec2(Math.cos(angle1) * 0.5 + 0.5, Math.sin(angle1) * 0.5 + 0.5)
+    )
+    texCoords.push(
+      vec2(Math.cos(angle2) * 0.5 + 0.5, Math.sin(angle2) * 0.5 + 0.5)
+    )
     indices.push(baseIdx, baseIdx + 1, baseIdx + 2)
 
     baseIdx += 3
@@ -328,6 +470,13 @@ function createWheel (x, y, z, radius, thickness) {
     normals.push(vec3(0, 0, -1))
     normals.push(vec3(0, 0, -1))
     normals.push(vec3(0, 0, -1))
+    texCoords.push(vec2(0.5, 0.5))
+    texCoords.push(
+      vec2(Math.cos(angle2) * 0.5 + 0.5, Math.sin(angle2) * 0.5 + 0.5)
+    )
+    texCoords.push(
+      vec2(Math.cos(angle1) * 0.5 + 0.5, Math.sin(angle1) * 0.5 + 0.5)
+    )
     indices.push(baseIdx, baseIdx + 1, baseIdx + 2)
 
     baseIdx += 3
@@ -347,6 +496,9 @@ function createWheel (x, y, z, radius, thickness) {
     normals.push(sideNormal)
     normals.push(sideNormal)
     normals.push(sideNormal)
+    texCoords.push(vec2(i / segments, 0))
+    texCoords.push(vec2(i / segments, 1))
+    texCoords.push(vec2((i + 1) / segments, 1))
     indices.push(baseIdx, baseIdx + 1, baseIdx + 2)
 
     baseIdx += 3
@@ -361,6 +513,9 @@ function createWheel (x, y, z, radius, thickness) {
     normals.push(sideNormal)
     normals.push(sideNormal)
     normals.push(sideNormal)
+    texCoords.push(vec2(i / segments, 0))
+    texCoords.push(vec2((i + 1) / segments, 1))
+    texCoords.push(vec2((i + 1) / segments, 0))
     indices.push(baseIdx, baseIdx + 1, baseIdx + 2)
   }
 }
@@ -495,156 +650,200 @@ function setupControls () {
   })
 }
 
-function setupLightingControls() {
+function setupLightingControls () {
   var lightStep = 0.5
   var colorStep = 0.05
   var shineStep = 5
-  
+
   // Light Position Controls
-  document.getElementById('ButtonL0').onclick = function() {
+  document.getElementById('ButtonL0').onclick = function () {
     lightPosition[0] = Math.min(lightPosition[0] + lightStep, 5.0)
     updateLightPositionDisplay()
   }
-  document.getElementById('ButtonL1').onclick = function() {
+  document.getElementById('ButtonL1').onclick = function () {
     lightPosition[0] = Math.max(lightPosition[0] - lightStep, -5.0)
     updateLightPositionDisplay()
   }
-  document.getElementById('ButtonL2').onclick = function() {
+  document.getElementById('ButtonL2').onclick = function () {
     lightPosition[1] = Math.min(lightPosition[1] + lightStep, 5.0)
     updateLightPositionDisplay()
   }
-  document.getElementById('ButtonL3').onclick = function() {
+  document.getElementById('ButtonL3').onclick = function () {
     lightPosition[1] = Math.max(lightPosition[1] - lightStep, -5.0)
     updateLightPositionDisplay()
   }
-  document.getElementById('ButtonL4').onclick = function() {
+  document.getElementById('ButtonL4').onclick = function () {
     lightPosition[2] = Math.min(lightPosition[2] + lightStep, 5.0)
     updateLightPositionDisplay()
   }
-  document.getElementById('ButtonL5').onclick = function() {
+  document.getElementById('ButtonL5').onclick = function () {
     lightPosition[2] = Math.max(lightPosition[2] - lightStep, -5.0)
     updateLightPositionDisplay()
   }
 
   // Ambient Light Controls
-  document.getElementById('ButtonL6').onclick = function() {
+  document.getElementById('ButtonL6').onclick = function () {
     ambientLight[0] = Math.min(ambientLight[0] + colorStep, 1.0)
     updateAmbientDisplay()
   }
-  document.getElementById('ButtonL7').onclick = function() {
+  document.getElementById('ButtonL7').onclick = function () {
     ambientLight[0] = Math.max(ambientLight[0] - colorStep, 0.0)
     updateAmbientDisplay()
   }
-  document.getElementById('ButtonL8').onclick = function() {
+  document.getElementById('ButtonL8').onclick = function () {
     ambientLight[1] = Math.min(ambientLight[1] + colorStep, 1.0)
     updateAmbientDisplay()
   }
-  document.getElementById('ButtonL9').onclick = function() {
+  document.getElementById('ButtonL9').onclick = function () {
     ambientLight[1] = Math.max(ambientLight[1] - colorStep, 0.0)
     updateAmbientDisplay()
   }
-  document.getElementById('ButtonL10').onclick = function() {
+  document.getElementById('ButtonL10').onclick = function () {
     ambientLight[2] = Math.min(ambientLight[2] + colorStep, 1.0)
     updateAmbientDisplay()
   }
-  document.getElementById('ButtonL11').onclick = function() {
+  document.getElementById('ButtonL11').onclick = function () {
     ambientLight[2] = Math.max(ambientLight[2] - colorStep, 0.0)
     updateAmbientDisplay()
   }
 
   // Diffuse Light Controls
-  document.getElementById('ButtonL12').onclick = function() {
+  document.getElementById('ButtonL12').onclick = function () {
     diffuseLight[0] = Math.min(diffuseLight[0] + colorStep, 1.0)
     updateDiffuseDisplay()
   }
-  document.getElementById('ButtonL13').onclick = function() {
+  document.getElementById('ButtonL13').onclick = function () {
     diffuseLight[0] = Math.max(diffuseLight[0] - colorStep, 0.0)
     updateDiffuseDisplay()
   }
-  document.getElementById('ButtonL14').onclick = function() {
+  document.getElementById('ButtonL14').onclick = function () {
     diffuseLight[1] = Math.min(diffuseLight[1] + colorStep, 1.0)
     updateDiffuseDisplay()
   }
-  document.getElementById('ButtonL15').onclick = function() {
+  document.getElementById('ButtonL15').onclick = function () {
     diffuseLight[1] = Math.max(diffuseLight[1] - colorStep, 0.0)
     updateDiffuseDisplay()
   }
-  document.getElementById('ButtonL16').onclick = function() {
+  document.getElementById('ButtonL16').onclick = function () {
     diffuseLight[2] = Math.min(diffuseLight[2] + colorStep, 1.0)
     updateDiffuseDisplay()
   }
-  document.getElementById('ButtonL17').onclick = function() {
+  document.getElementById('ButtonL17').onclick = function () {
     diffuseLight[2] = Math.max(diffuseLight[2] - colorStep, 0.0)
     updateDiffuseDisplay()
   }
 
   // Specular Light Controls
-  document.getElementById('ButtonL18').onclick = function() {
+  document.getElementById('ButtonL18').onclick = function () {
     specularLight[0] = Math.min(specularLight[0] + colorStep, 1.0)
     updateSpecularDisplay()
   }
-  document.getElementById('ButtonL19').onclick = function() {
+  document.getElementById('ButtonL19').onclick = function () {
     specularLight[0] = Math.max(specularLight[0] - colorStep, 0.0)
     updateSpecularDisplay()
   }
-  document.getElementById('ButtonL20').onclick = function() {
+  document.getElementById('ButtonL20').onclick = function () {
     specularLight[1] = Math.min(specularLight[1] + colorStep, 1.0)
     updateSpecularDisplay()
   }
-  document.getElementById('ButtonL21').onclick = function() {
+  document.getElementById('ButtonL21').onclick = function () {
     specularLight[1] = Math.max(specularLight[1] - colorStep, 0.0)
     updateSpecularDisplay()
   }
-  document.getElementById('ButtonL22').onclick = function() {
+  document.getElementById('ButtonL22').onclick = function () {
     specularLight[2] = Math.min(specularLight[2] + colorStep, 1.0)
     updateSpecularDisplay()
   }
-  document.getElementById('ButtonL23').onclick = function() {
+  document.getElementById('ButtonL23').onclick = function () {
     specularLight[2] = Math.max(specularLight[2] - colorStep, 0.0)
     updateSpecularDisplay()
   }
 
   // Shininess Controls
-  document.getElementById('ButtonL24').onclick = function() {
+  document.getElementById('ButtonL24').onclick = function () {
     shininess = Math.min(shininess + shineStep, 100.0)
     updateShininessDisplay()
   }
-  document.getElementById('ButtonL25').onclick = function() {
+  document.getElementById('ButtonL25').onclick = function () {
     shininess = Math.max(shininess - shineStep, 1.0)
     updateShininessDisplay()
   }
 }
 
-function updateLightPositionDisplay() {
-  document.getElementById('light-position-value').textContent = 
-    '(' + lightPosition[0].toFixed(1) + ', ' + 
-    lightPosition[1].toFixed(1) + ', ' + 
-    lightPosition[2].toFixed(1) + ')'
+function updateLightPositionDisplay () {
+  document.getElementById('light-position-value').textContent =
+    '(' +
+    lightPosition[0].toFixed(1) +
+    ', ' +
+    lightPosition[1].toFixed(1) +
+    ', ' +
+    lightPosition[2].toFixed(1) +
+    ')'
 }
 
-function updateAmbientDisplay() {
-  document.getElementById('ambient-value').textContent = 
-    'RGB(' + ambientLight[0].toFixed(2) + ', ' + 
-    ambientLight[1].toFixed(2) + ', ' + 
-    ambientLight[2].toFixed(2) + ')'
+function updateAmbientDisplay () {
+  document.getElementById('ambient-value').textContent =
+    'RGB(' +
+    ambientLight[0].toFixed(2) +
+    ', ' +
+    ambientLight[1].toFixed(2) +
+    ', ' +
+    ambientLight[2].toFixed(2) +
+    ')'
 }
 
-function updateDiffuseDisplay() {
-  document.getElementById('diffuse-value').textContent = 
-    'RGB(' + diffuseLight[0].toFixed(2) + ', ' + 
-    diffuseLight[1].toFixed(2) + ', ' + 
-    diffuseLight[2].toFixed(2) + ')'
+function updateDiffuseDisplay () {
+  document.getElementById('diffuse-value').textContent =
+    'RGB(' +
+    diffuseLight[0].toFixed(2) +
+    ', ' +
+    diffuseLight[1].toFixed(2) +
+    ', ' +
+    diffuseLight[2].toFixed(2) +
+    ')'
 }
 
-function updateSpecularDisplay() {
-  document.getElementById('specular-value').textContent = 
-    'RGB(' + specularLight[0].toFixed(2) + ', ' + 
-    specularLight[1].toFixed(2) + ', ' + 
-    specularLight[2].toFixed(2) + ')'
+function updateSpecularDisplay () {
+  document.getElementById('specular-value').textContent =
+    'RGB(' +
+    specularLight[0].toFixed(2) +
+    ', ' +
+    specularLight[1].toFixed(2) +
+    ', ' +
+    specularLight[2].toFixed(2) +
+    ')'
 }
 
-function updateShininessDisplay() {
+function updateShininessDisplay () {
   document.getElementById('shininess-value').textContent = shininess.toFixed(1)
+}
+
+function setupTextureControls () {
+  // Texture mode buttons
+  document.getElementById('ButtonT0').onclick = function () {
+    textureMode = 0
+    updateTextureModeDisplay()
+  }
+
+  document.getElementById('ButtonT1').onclick = function () {
+    textureMode = 1
+    updateTextureModeDisplay()
+  }
+
+  document.getElementById('ButtonT2').onclick = function () {
+    textureMode = 2
+    updateTextureModeDisplay()
+  }
+}
+
+function updateTextureModeDisplay () {
+  var modeText = 'OFF'
+  if (textureMode === 1) {
+    modeText = 'CHECKBOARD'
+  } else if (textureMode === 2) {
+    modeText = 'IMAGE'
+  }
+  document.getElementById('texture-mode-value').textContent = modeText
 }
 
 function resetAll () {
@@ -666,6 +865,9 @@ function resetAll () {
   specularLight = [1.0, 1.0, 1.0]
   shininess = 10.0
 
+  // Reset texture mode
+  textureMode = 0
+
   document.getElementById('rotateX').value = 30
   document.getElementById('rotateX-value').textContent = '30°'
   document.getElementById('rotateY').value = 30
@@ -681,6 +883,7 @@ function resetAll () {
   updateDiffuseDisplay()
   updateSpecularDisplay()
   updateShininessDisplay()
+  updateTextureModeDisplay()
 }
 
 function render () {
@@ -723,13 +926,37 @@ function render () {
   gl.uniformMatrix3fv(normalMatrixLoc, false, flatten(normalMatrix))
 
   // 7. Send lighting parameters to shader
-  gl.uniform4fv(lightPositionLoc, flatten(vec4(lightPosition[0], lightPosition[1], lightPosition[2], 1.0)))
-  gl.uniform3fv(ambientLightLoc, flatten(vec3(ambientLight[0], ambientLight[1], ambientLight[2])))
-  gl.uniform3fv(diffuseLightLoc, flatten(vec3(diffuseLight[0], diffuseLight[1], diffuseLight[2])))
-  gl.uniform3fv(specularLightLoc, flatten(vec3(specularLight[0], specularLight[1], specularLight[2])))
+  gl.uniform4fv(
+    lightPositionLoc,
+    flatten(vec4(lightPosition[0], lightPosition[1], lightPosition[2], 1.0))
+  )
+  gl.uniform3fv(
+    ambientLightLoc,
+    flatten(vec3(ambientLight[0], ambientLight[1], ambientLight[2]))
+  )
+  gl.uniform3fv(
+    diffuseLightLoc,
+    flatten(vec3(diffuseLight[0], diffuseLight[1], diffuseLight[2]))
+  )
+  gl.uniform3fv(
+    specularLightLoc,
+    flatten(vec3(specularLight[0], specularLight[1], specularLight[2]))
+  )
   gl.uniform1f(shininessLoc, shininess)
 
-  // 8. Draw the object
+  // 8. Set texture mode and bind appropriate texture
+  gl.uniform1i(textureModeLoc, textureMode)
+
+  gl.activeTexture(gl.TEXTURE0)
+  if (textureMode === 1) {
+    gl.bindTexture(gl.TEXTURE_2D, checkboardTexture)
+  } else if (textureMode === 2) {
+    gl.bindTexture(gl.TEXTURE_2D, imageTexture)
+  } else {
+    gl.bindTexture(gl.TEXTURE_2D, null)
+  }
+
+  // 9. Draw the object
   gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0)
 
   requestAnimationFrame(render)
