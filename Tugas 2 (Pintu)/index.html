@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<head>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<html>
+  <body class="w-full min-h-screen px-12 pt-8 pb-12">
+    <div class="flex flex-row gap-12 mb-8">
+      <p class="font-bold text-xl">Tugas 2 - Pintu Kamar Mandi Tower 1</p>
+      <div>
+        <p>Alvin Zanua Putra (5025231064)</p>
+        <p>Pramuditya Faiz Ardiansyah (5025231108)</p>
+        <p>Christoforus Indra Bagus Pratama (5025231124)</p>
+      </div>
+      <table class="border-collapse border border-black">
+        <tbody>
+          <tr>
+            <td class="border border-black px-4 py-2 font-bold">Nama</td>
+            <td class="border border-black px-4 py-2 font-bold">
+              Bagian Tugas
+            </td>
+          </tr>
+          <tr>
+            <td class="border border-black px-4 py-2">Alvin Zanua Putra</td>
+            <td class="border border-black px-4 py-2">
+              Menambahkan Animasi, Menambahkan Lighting
+            </td>
+          </tr>
+          <tr>
+            <td class="border border-black px-4 py-2">
+              Pramuditya Faiz Ardiansyah
+            </td>
+            <td class="border border-black px-4 py-2">
+              Menambahkan Animasi, Menambahkan Texture
+            </td>
+          </tr>
+          <tr>
+            <td class="border border-black px-4 py-2">
+              Christoforus Indra Bagus Pratama
+            </td>
+            <td class="border border-black px-4 py-2">
+              Membuat Model Object Pintu & Membuat Struktur Hierarchy
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="flex gap-6 mb-6">
+      <div class="flex flex-col gap-6">
+        <div>
+          <canvas
+            id="gl-canvas"
+            width="600"
+            height="600"
+            style="border: 1px solid black"
+          ></canvas>
+        </div>
+
+        <div class="border border-black p-4" style="width: 600px">
+          <h3 class="font-bold text-lg mb-2">Gambar Reference</h3>
+          <img src="./ref.jpg" alt="" class="w-full" />
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-2 w-full">
+        <div class="border border-black p-4 flex gap-4">
+          <button
+            id="resetButton"
+            class="font-bold py-2 px-4 rounded border border-black"
+          >
+            Reset
+          </button>
+          <button
+            id="hierarchyToggle"
+            class="font-bold py-2 px-4 rounded border border-black bg-green-500 text-white"
+          >
+            Hirarki: ON
+          </button>
+        </div>
+
+        <div class="border border-black px-4 py-2">
+          <p class="font-bold mb-2">Pintu</p>
+          <input
+            type="range"
+            id="doorAngle"
+            min="0"
+            max="90"
+            value="0"
+            step="1"
+            class="w-full"
+          />
+          <span id="doorAngleValue">0</span>
+        </div>
+
+        <div class="border border-black px-4 py-2">
+          <p class="font-bold mb-2">Handle Pintu</p>
+          <input
+            type="range"
+            id="handleAngle"
+            min="0"
+            max="70"
+            value="0"
+            step="1"
+            class="w-full"
+          />
+          <span id="handleAngleValue">0</span>
+        </div>
+
+        <div class="border border-black px-4 py-2">
+          <p class="font-bold mb-2">Posisi Cahaya</p>
+          <div class="mb-2">
+            <label>X</label>
+            <input
+              type="range"
+              id="lightPosX"
+              min="-5.0"
+              max="5.0"
+              value="1.0"
+              step="0.1"
+              class="w-full"
+            />
+          </div>
+          <div class="mb-2">
+            <label>Y</label>
+            <input
+              type="range"
+              id="lightPosY"
+              min="-5.0"
+              max="5.0"
+              value="1.0"
+              step="0.1"
+              class="w-full"
+            />
+          </div>
+          <div>
+            <label>Z</label>
+            <input
+              type="range"
+              id="lightPosZ"
+              min="-5.0"
+              max="5.0"
+              value="1.0"
+              step="0.1"
+              class="w-full"
+            />
+          </div>
+        </div>
+
+        <div class="border border-black px-4 py-2">
+          <p class="font-bold mb-2">Warna Ambient</p>
+          <div class="mb-2">
+            <label>R</label>
+            <input
+              type="range"
+              id="ambientR"
+              min="0.0"
+              max="1.0"
+              value="0.2"
+              step="0.01"
+              class="w-full"
+            />
+          </div>
+          <div class="mb-2">
+            <label>G</label>
+            <input
+              type="range"
+              id="ambientG"
+              min="0.0"
+              max="1.0"
+              value="0.2"
+              step="0.01"
+              class="w-full"
+            />
+          </div>
+          <div>
+            <label>B</label>
+            <input
+              type="range"
+              id="ambientB"
+              min="0.0"
+              max="1.0"
+              value="0.2"
+              step="0.01"
+              class="w-full"
+            />
+          </div>
+        </div>
+
+        <div class="border border-black px-4 py-2">
+          <p class="font-bold mb-2">Warna Diffuse</p>
+          <div class="mb-2">
+            <label>R</label>
+            <input
+              type="range"
+              id="diffuseR"
+              min="0.0"
+              max="1.0"
+              value="1.0"
+              step="0.01"
+              class="w-full"
+            />
+          </div>
+          <div class="mb-2">
+            <label>G</label>
+            <input
+              type="range"
+              id="diffuseG"
+              min="0.0"
+              max="1.0"
+              value="1.0"
+              step="0.01"
+              class="w-full"
+            />
+          </div>
+          <div>
+            <label>B</label>
+            <input
+              type="range"
+              id="diffuseB"
+              min="0.0"
+              max="1.0"
+              value="1.0"
+              step="0.01"
+              class="w-full"
+            />
+          </div>
+        </div>
+
+        <div class="border border-black px-4 py-2">
+          <p class="font-bold mb-2">Warna Specular</p>
+          <div class="mb-2">
+            <label>R</label>
+            <input
+              type="range"
+              id="specularR"
+              min="0.0"
+              max="1.0"
+              value="1.0"
+              step="0.01"
+              class="w-full"
+            />
+          </div>
+          <div class="mb-2">
+            <label>G</label>
+            <input
+              type="range"
+              id="specularG"
+              min="0.0"
+              max="1.0"
+              value="1.0"
+              step="0.01"
+              class="w-full"
+            />
+          </div>
+          <div>
+            <label>B</label>
+            <input
+              type="range"
+              id="specularB"
+              min="0.0"
+              max="1.0"
+              value="1.0"
+              step="0.01"
+              class="w-full"
+            />
+          </div>
+        </div>
+
+        <div class="border border-black px-4 py-2">
+          <p class="font-bold mb-2">Shininess</p>
+          <input
+            type="range"
+            id="shininess"
+            min="1.0"
+            max="100.0"
+            value="20.0"
+            step="1.0"
+            class="w-full"
+          />
+        </div>
+
+        <div class="border border-black p-4" style="width: 200px">
+          <h3 class="font-bold text-lg mb-2">Struktur Hierarchy</h3>
+          <img src="./graph.png" alt="" class="w-full" />
+        </div>
+      </div>
+    </div>
+
+    <script id="vertex-shader" type="x-shader/x-vertex">
+      #version 300 es
+
+      in vec4 aPosition;
+      in vec4 aNormal;
+      in vec4 aColor;
+      in vec2 aTexCoord;
+      in float aPartID;
+      out vec3 N, L, E;
+      out vec4 vColor;
+      out vec2 vTexCoord;
+
+      uniform vec3 uTheta;
+      uniform float uScale;
+      uniform mat4 uModelViewMatrix;
+      uniform mat4 uProjectionMatrix;
+      uniform vec4 uLightPosition;
+      uniform mat3 uNormalMatrix;
+      uniform float uDoorAngle;
+      uniform float uHandleAngle;
+
+      void main()
+      {
+          vec3 angles = radians(uTheta);
+          vec3 c = cos(angles);
+          vec3 s = sin(angles);
+
+          mat4 rx = mat4(1.0,  0.0,  0.0, 0.0,
+                         0.0,  c.x,  s.x, 0.0,
+                         0.0, -s.x,  c.x, 0.0,
+                         0.0,  0.0,  0.0, 1.0);
+
+          mat4 ry = mat4( c.y, 0.0, -s.y, 0.0,
+                          0.0, 1.0,  0.0, 0.0,
+                          s.y, 0.0,  c.y, 0.0,
+                          0.0, 0.0,  0.0, 1.0);
+
+          mat4 rz = mat4( c.z, -s.z, 0.0, 0.0,
+                          s.z,  c.z, 0.0, 0.0,
+                          0.0,  0.0, 1.0, 0.0,
+                          0.0,  0.0, 0.0, 1.0);
+
+                   mat4 scale = mat4(uScale,    0.0,    0.0, 0.0,
+                                       0.0, uScale,    0.0, 0.0,
+                                       0.0,    0.0, uScale, 0.0,
+                                       0.0,    0.0,    0.0, 1.0);
+
+                   vec4 transformedPosition = aPosition;
+                   vec3 transformedNormal = aNormal.xyz;
+
+                   float doorPivotX = 0.4;
+                   float handlePivotX = -0.32;
+                   float handlePivotY = 0.0;
+                   float handlePivotZ = 0.045;
+
+
+                   if(aPartID >= 1.5) {
+                       float handleRad = radians(uHandleAngle);
+                       float handleCos = cos(handleRad);
+                       float handleSin = sin(handleRad);
+
+                       transformedPosition.x -= handlePivotX;
+                       transformedPosition.y -= handlePivotY;
+                       transformedPosition.z -= handlePivotZ;
+
+                       float handleNewX = handleCos * transformedPosition.x + handleSin * transformedPosition.y;
+                       float handleNewY = -handleSin * transformedPosition.x + handleCos * transformedPosition.y;
+                       transformedPosition.x = handleNewX;
+                       transformedPosition.y = handleNewY;
+
+                       float handleNormalX = handleCos * transformedNormal.x + handleSin * transformedNormal.y;
+                       float handleNormalY = -handleSin * transformedNormal.x + handleCos * transformedNormal.y;
+                       transformedNormal.x = handleNormalX;
+                       transformedNormal.y = handleNormalY;
+
+                       transformedPosition.x += handlePivotX;
+                       transformedPosition.y += handlePivotY;
+                       transformedPosition.z += handlePivotZ;
+                   }
+
+
+                   if(aPartID >= 0.5) {
+                       float doorRad = radians(uDoorAngle);
+                       float doorCos = cos(doorRad);
+                       float doorSin = sin(doorRad);
+
+                       transformedPosition.x -= doorPivotX;
+
+                       float newX = doorCos * transformedPosition.x - doorSin * transformedPosition.z;
+                       float newZ = doorSin * transformedPosition.x + doorCos * transformedPosition.z;
+                       transformedPosition.x = newX;
+                       transformedPosition.z = newZ;
+
+                       float normalX = doorCos * transformedNormal.x - doorSin * transformedNormal.z;
+                       float normalZ = doorSin * transformedNormal.x + doorCos * transformedNormal.z;
+                       transformedNormal.x = normalX;
+                       transformedNormal.z = normalZ;
+
+                       transformedPosition.x += doorPivotX;
+                   }
+
+                   transformedPosition = rz * ry * rx * scale * transformedPosition;
+                   vec3 pos = (uModelViewMatrix * transformedPosition).xyz;
+
+                   if(uLightPosition.w == 0.0) L = normalize(uLightPosition.xyz);
+                   else L = normalize( uLightPosition.xyz - pos );
+
+                   E =  -normalize(pos);
+                   N = normalize( uNormalMatrix * transformedNormal);
+
+                   vColor = aColor;
+                   vTexCoord = aTexCoord;
+
+                   gl_Position = uProjectionMatrix * uModelViewMatrix * transformedPosition;
+      }
+    </script>
+
+    <script id="fragment-shader" type="x-shader/x-fragment">
+      #version 300 es
+
+      precision mediump float;
+
+      uniform vec4 uAmbientProduct;
+      uniform vec4 uDiffuseProduct;
+      uniform vec4 uSpecularProduct;
+      uniform float uShininess;
+      uniform sampler2D uDoorTexture;
+      uniform sampler2D uLabelTexture;
+
+      in vec3 N, L, E;
+      in vec4 vColor;
+      in vec2 vTexCoord;
+      out vec4 fColor;
+
+      void main()
+      {
+          vec3 H = normalize( L + E );
+          vec4 ambient = uAmbientProduct * vColor;
+
+          float Kd = max( dot(L, N), 0.0 );
+          vec4  diffuse = Kd*uDiffuseProduct * vColor;
+
+          float Ks = pow( max(dot(N, H), 0.0), uShininess );
+          vec4  specular = Ks * uSpecularProduct;
+
+          if( dot(L, N) < 0.0 ) specular = vec4(0.0, 0.0, 0.0, 1.0);
+
+          vec4 texColor;
+          if(vTexCoord.x < 0.0) {
+              texColor = vec4(1.0, 1.0, 1.0, 1.0);
+          } else if(vTexCoord.x > 1.0) {
+              texColor = texture(uLabelTexture, vec2(vTexCoord.y, vTexCoord.x - 1.0));
+          } else {
+              texColor = texture(uDoorTexture, vec2(vTexCoord.x, vTexCoord.y));
+          }
+
+          fColor = (ambient + diffuse + specular) * texColor;
+          fColor.a = 1.0;
+      }
+    </script>
+
+    <script src="initShaders.js"></script>
+    <script src="MVnew.js"></script>
+    <script src="tugas.js"></script>
+  </body>
+</html>
